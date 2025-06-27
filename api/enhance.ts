@@ -1,62 +1,97 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { GoogleGenAI } from "@google/genai";
+import { NextRequest, NextResponse } from 'next/server';
+import { GoogleGenAI } from '@google/genai';
+import OpenAI from 'openai';
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
 
 interface EnhancePromptParams {
   userPrompt: string;
   contentTone: string;
   pov: string;
+  selectedModel: string;
 }
 
-export default async function handler(
-  request: VercelRequest,
-  response: VercelResponse,
-) {
-  if (request.method !== 'POST') {
-    return response.status(405).json({ error: 'Method Not Allowed' });
-  }
-
-  const { userPrompt, contentTone, pov } = request.body as EnhancePromptParams;
-
-  if (!userPrompt || !contentTone || !pov) {
-    return response.status(400).json({ error: 'Missing required parameters: userPrompt, contentTone, pov' });
-  }
-
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    console.error("API key is not set.");
-    return response.status(500).json({ error: 'Server configuration error: API key not found.' });
-  }
-
-  const ai = new GoogleGenAI({ apiKey });
-
-  const promptForAI = `You are a prompt engineering expert for text-to-image and text-to-video AI models like "Veo". Your task is to take a simple user prompt and expand it into a highly detailed, descriptive, and optimized prompt, specifically tailored for an 8-second video clip.
-
-Focus on:
-- Video Duration: Ensure the description implies a concise, impactful 8-second video sequence.
-- Content Tone: ${contentTone}
-- Point of View: ${pov}
-
-Transform the following user prompt into an advanced, detailed prompt (aim for 150-250 words to allow for detail within an 8-second concept):
-
-User Prompt: "${userPrompt}"
-
-Start directly with the enhanced video prompt. Do not include any introductory text.`;
-
+export async function POST(req: NextRequest) {
   try {
-    const result = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-preview-04-17',
-      contents: promptForAI,
-    });
+    const body: EnhancePromptParams = await req.json();
+    const { userPrompt, contentTone, pov, selectedModel } = body;
 
-    const text = result.text;
-    if (!text) {
-      return response.status(500).json({ error: "The AI returned an empty response." });
+    // Validate
+    if (!userPrompt || !contentTone || !pov || !selectedModel) {
+      return NextResponse.json({ error: 'Missing required parameters.' }, { status: 400 });
     }
 
-    return response.status(200).json({ text });
-  } catch (error) {
-    console.error('Error calling Gemini API:', error);
-    const message = error instanceof Error ? error.message : 'An unknown error occurred.';
-    return response.status(500).json({ error: `Failed to get response from AI: ${message}` });
+    let finalResult = '';
+
+    // Handle Google Gemini
+    if (selectedModel === 'gemini') {
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        console.error('Gemini API key is missing.');
+        return NextResponse.json({ error: 'Gemini API key not set on server.' }, { status: 500 });
+      }
+
+      const genAI = new GoogleGenAI({ apiKey });
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+      const prompt = `
+You are a prompt engineering expert for text-to-video AI (like Veo).
+Your task is to transform the user's simple prompt into a highly detailed, descriptive, 8-second video prompt.
+
+- Content Tone: ${contentTone}
+- Point of View: ${pov}
+- User Prompt: ${userPrompt}
+
+Write only the enhanced video prompt. No preamble or explanation.
+`;
+
+      const result = await model.generateContent(prompt);
+      finalResult = result?.response?.text() || '';
+
+    // Handle OpenAI GPT
+    } else if (selectedModel === 'openai-gpt') {
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey) {
+        console.error('OpenAI API key is missing.');
+        return NextResponse.json({ error: 'OpenAI API key not set on server.' }, { status: 500 });
+      }
+
+      const systemMessage = `
+You are a prompt engineering expert for text-to-video AI (like Veo).
+Your task: turn the user's simple prompt into a detailed, cinematic, optimized 8-second video prompt.
+
+- Content Tone: ${contentTone}
+- Point of View: ${pov}
+- Video Duration: 8 seconds
+
+Return ONLY the enhanced video prompt. No preamble or explanation.
+`;
+
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: systemMessage },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.7
+      });
+
+      finalResult = completion.choices?.[0]?.message?.content?.trim() || '';
+
+    } else {
+      return NextResponse.json({ error: 'Invalid model selection.' }, { status: 400 });
+    }
+
+    // Return result
+    return NextResponse.json({ result: finalResult });
+
+  } catch (err) {
+    console.error('Server error:', err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Unknown server error.' },
+      { status: 500 }
+    );
   }
 }
