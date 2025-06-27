@@ -1,0 +1,5 @@
+{
+  "name": "AI Video Prompt Enhancer",
+  "description": "Enter a simple prompt, select a tone and point-of-view, and this app will use the Gemini API to generate a detailed, optimized prompt for an 8-second text-to-video generation.",
+  "requestFramePermissions": []
+}

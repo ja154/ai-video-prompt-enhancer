@@ -1,0 +1,13 @@
+
+{
+  "name": "ai-video-prompt-enhancer-vercel",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@google/genai": "^1.7.0",
+    "@vercel/node": "^3.0.22"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}

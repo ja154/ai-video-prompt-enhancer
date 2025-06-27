@@ -1,0 +1,10 @@
+
+{
+    "framework": null,
+    "installCommand": "npm install",
+    "functions": {
+        "api/**/*.ts": {
+            "runtime": "nodejs18.x"
+        }
+    }
+}
