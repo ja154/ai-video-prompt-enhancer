@@ -74,3 +74,17 @@ html.dark body {
 .btn-primary {
   @apply rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-6 py-2 shadow-lg hover:from-emerald-600 hover:to-teal-700 transition-all duration-300;
 }
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.8s ease-out;
+}
