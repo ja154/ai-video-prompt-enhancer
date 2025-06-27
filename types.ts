@@ -1,20 +1,23 @@
-
 export enum ContentTone {
   Neutral = 'Neutral',
-  Humorous = 'Humorous',
+  Cinematic = 'Cinematic',
   Dramatic = 'Dramatic',
-  Whimsical = 'Whimsical',
+  Playful = 'Playful',
   Serious = 'Serious',
-  Suspenseful = 'Suspenseful',
-  Adventurous = 'Adventurous',
+  Epic = 'Epic'
 }
 
 export enum PointOfView {
-  ThirdPerson = 'Third-Person',
-  FirstPerson = 'First-Person (POV)',
-  Aerial = 'Aerial',
-  Dolly = 'Dolly',
-  StaticShot = 'Static Shot',
-  TrackingShot = 'Tracking Shot',
-  DutchAngle = 'Dutch Angle',
+  FirstPerson = 'FirstPerson',
+  ThirdPerson = 'ThirdPerson',
+  Omniscient = 'Omniscient'
+}
+
+export type ModelOption = 'gemini' | 'openai-gpt';
+
+export interface EnhancePromptParams {
+  userPrompt: string;
+  contentTone: ContentTone;
+  pov: PointOfView;
+  selectedModel: ModelOption;
 }
