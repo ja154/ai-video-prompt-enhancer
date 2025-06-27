@@ -38,6 +38,10 @@ const App = () => {
     });
   }, [generatedPrompt]);
 
+  const handleClearPrompt = () => {
+    setGeneratedPrompt('');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white p-4 sm:p-8 flex items-center justify-center font-sans">
       <div className="w-full max-w-4xl bg-gray-800 p-6 sm:p-10 rounded-2xl shadow-2xl border border-gray-700">
@@ -48,6 +52,7 @@ const App = () => {
           Enter a simple prompt, select your desired tone and POV, and our AI will expand it into a detailed, 8-second video prompt optimized for models like Veo.
         </p>
 
+        {/* Input prompt */}
         <div className="mb-6">
           <label htmlFor="userPrompt" className="block text-lg font-medium text-gray-200 mb-2">
             Your Initial Prompt:
@@ -55,7 +60,6 @@ const App = () => {
           <textarea
             id="userPrompt"
             className="w-full p-4 rounded-lg bg-gray-700 text-gray-50 border border-gray-600 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition duration-200 ease-in-out resize-y min-h-[100px] shadow-inner"
-            rows={4}
             value={userPrompt}
             onChange={(e) => setUserPrompt(e.target.value)}
             placeholder="e.g., A dog in a park"
@@ -63,6 +67,7 @@ const App = () => {
           ></textarea>
         </div>
 
+        {/* Tone and POV selection */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
           <div>
             <label htmlFor="contentTone" className="block text-lg font-medium text-gray-200 mb-2">
@@ -75,10 +80,11 @@ const App = () => {
               onChange={(e) => setContentTone(e.target.value as ContentTone)}
               aria-label="Select Content Tone"
             >
-              {TONE_OPTIONS.map(tone => <option key={tone} value={tone}>{tone}</option>)}
+              {TONE_OPTIONS.map(tone => (
+                <option key={tone} value={tone}>{tone}</option>
+              ))}
             </select>
           </div>
-
           <div>
             <label htmlFor="pov" className="block text-lg font-medium text-gray-200 mb-2">
               Point of View (POV):
@@ -90,11 +96,14 @@ const App = () => {
               onChange={(e) => setPov(e.target.value as PointOfView)}
               aria-label="Select Point of View"
             >
-              {POV_OPTIONS.map(option => <option key={option} value={option}>{option}</option>)}
+              {POV_OPTIONS.map(option => (
+                <option key={option} value={option}>{option}</option>
+              ))}
             </select>
           </div>
         </div>
 
+        {/* Generate button */}
         <div className="flex justify-center mb-8">
           <button
             onClick={handleGenerateClick}
@@ -124,6 +133,7 @@ const App = () => {
           </button>
         </div>
 
+        {/* Error message */}
         {error && (
           <div className="bg-red-800 p-4 rounded-lg text-red-100 mb-8 shadow-md" role="alert">
             <p className="font-semibold">An error occurred:</p>
@@ -131,21 +141,30 @@ const App = () => {
           </div>
         )}
 
+        {/* Enhanced prompt editor */}
         {generatedPrompt && (
-          <div className="mt-8">
-            <label htmlFor="generatedPrompt" className="block text-lg font-medium text-gray-200 mb-2">
+          <div className="mt-10">
+            <h2 className="text-lg font-semibold text-gray-200 mb-2">
               Enhanced Video Prompt (8-sec optimized):
-            </label>
+            </h2>
+            <p className="text-sm text-gray-400 mb-4">
+              This is your AI-enhanced prompt. Feel free to <strong>add extra details</strong>, modify scenes, or customize anything before copying!
+            </p>
             <textarea
               id="generatedPrompt"
-              className="w-full p-4 rounded-lg bg-gray-700 text-gray-50 border border-gray-600 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition duration-200 ease-in-out resize-y min-h-[150px] shadow-inner"
-              rows={7}
+              className="w-full p-5 rounded-lg bg-gray-700 text-gray-50 border border-gray-600 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition duration-200 ease-in-out resize-y min-h-[250px] shadow-inner placeholder-gray-400"
               value={generatedPrompt}
               onChange={(e) => setGeneratedPrompt(e.target.value)}
-              placeholder="Edit your enhanced prompt here before copying..."
+              placeholder="Add details like camera movement, lighting, mood, scene transitions, or dialogue..."
               aria-label="Enhanced Video Prompt"
             ></textarea>
-            <div className="flex justify-end mt-4">
+            <div className="flex justify-end mt-4 gap-2">
+              <button
+                onClick={handleClearPrompt}
+                className="px-4 py-2 rounded-full bg-gray-600 text-white text-sm font-medium shadow hover:bg-gray-500 transition duration-200 ease-in-out transform hover:scale-105 active:scale-95"
+              >
+                Clear
+              </button>
               <button
                 onClick={handleCopyToClipboard}
                 className="px-5 py-2 rounded-full bg-blue-600 text-white text-sm font-medium shadow-md hover:bg-blue-700 transition duration-200 ease-in-out transform hover:scale-105 active:scale-95"
@@ -157,13 +176,14 @@ const App = () => {
           </div>
         )}
 
+        {/* Prompt Tips */}
         <div className="mt-12 text-sm text-gray-400 border-t border-gray-700 pt-6">
           <h2 className="text-lg font-semibold text-gray-300 mb-2">Prompt Tips:</h2>
           <ul className="list-disc list-inside space-y-2">
             <li>Be specific about the subject and action.</li>
             <li>Include lighting, mood, and setting details.</li>
             <li>Use cinematic language for video dynamics.</li>
-            <li>Refine your generated prompt in the editor before copying!</li>
+            <li>Refine or expand your generated prompt in the editor before copying!</li>
           </ul>
         </div>
       </div>
