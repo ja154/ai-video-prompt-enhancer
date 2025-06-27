@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { enhancePrompt } from './services/geminiService';
-import { TONE_OPTIONS, POV_OPTIONS } from './constants';
+import { TONE_OPTIONS, POV_OPTIONS, MODEL_OPTIONS } from './constants';
 import { ContentTone, PointOfView } from './types';
 
 const App = () => {
@@ -10,6 +10,7 @@ const App = () => {
   const [error, setError] = useState('');
   const [contentTone, setContentTone] = useState<ContentTone>(ContentTone.Neutral);
   const [pov, setPov] = useState<PointOfView>(PointOfView.ThirdPerson);
+  const [selectedModel, setSelectedModel] = useState('gemini');
 
   const handleGenerateClick = useCallback(async () => {
     if (!userPrompt.trim()) return;
@@ -19,7 +20,7 @@ const App = () => {
     setIsLoading(true);
 
     try {
-      const result = await enhancePrompt({ userPrompt, contentTone, pov });
+      const result = await enhancePrompt({ userPrompt, contentTone, pov, selectedModel });
       setGeneratedPrompt(result);
     } catch (err) {
       console.error('Error generating prompt:', err);
@@ -28,7 +29,7 @@ const App = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [userPrompt, contentTone, pov]);
+  }, [userPrompt, contentTone, pov, selectedModel]);
 
   const handleCopyToClipboard = useCallback(() => {
     if (!generatedPrompt) return;
@@ -38,10 +39,6 @@ const App = () => {
     });
   }, [generatedPrompt]);
 
-  const handleClearPrompt = () => {
-    setGeneratedPrompt('');
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white p-4 sm:p-8 flex items-center justify-center font-sans">
       <div className="w-full max-w-4xl bg-gray-800 p-6 sm:p-10 rounded-2xl shadow-2xl border border-gray-700">
@@ -49,10 +46,10 @@ const App = () => {
           AI Video Prompt Enhancer
         </h1>
         <p className="text-center text-gray-300 mb-8 max-w-2xl mx-auto">
-          Enter a simple prompt, select your desired tone and POV, and our AI will expand it into a detailed, 8-second video prompt optimized for models like Veo.
+          Enter a simple prompt, select your desired tone, POV, and AI model. Our AI will expand it into a detailed, 8-second video prompt optimized for models like Veo.
         </p>
 
-        {/* Input prompt */}
+        {/* User prompt input */}
         <div className="mb-6">
           <label htmlFor="userPrompt" className="block text-lg font-medium text-gray-200 mb-2">
             Your Initial Prompt:
@@ -60,6 +57,7 @@ const App = () => {
           <textarea
             id="userPrompt"
             className="w-full p-4 rounded-lg bg-gray-700 text-gray-50 border border-gray-600 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition duration-200 ease-in-out resize-y min-h-[100px] shadow-inner"
+            rows={4}
             value={userPrompt}
             onChange={(e) => setUserPrompt(e.target.value)}
             placeholder="e.g., A dog in a park"
@@ -67,38 +65,52 @@ const App = () => {
           ></textarea>
         </div>
 
-        {/* Tone and POV selection */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+        {/* Model / Tone / POV Selectors */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+          <div>
+            <label htmlFor="model" className="block text-lg font-medium text-gray-200 mb-2">
+              Model Provider:
+            </label>
+            <select
+              id="model"
+              className="w-full p-3 rounded-lg bg-gray-700 text-gray-50 border border-gray-600 focus:ring-2 focus:ring-emerald-500 transition duration-200 ease-in-out shadow-inner"
+              value={selectedModel}
+              onChange={(e) => setSelectedModel(e.target.value)}
+              aria-label="Select AI Model"
+            >
+              {MODEL_OPTIONS.map(model => (
+                <option key={model.id} value={model.id}>{model.name}</option>
+              ))}
+            </select>
+          </div>
+
           <div>
             <label htmlFor="contentTone" className="block text-lg font-medium text-gray-200 mb-2">
               Content Tone:
             </label>
             <select
               id="contentTone"
-              className="w-full p-3 rounded-lg bg-gray-700 text-gray-50 border border-gray-600 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition duration-200 ease-in-out shadow-inner"
+              className="w-full p-3 rounded-lg bg-gray-700 text-gray-50 border border-gray-600 focus:ring-2 focus:ring-emerald-500 transition duration-200 ease-in-out shadow-inner"
               value={contentTone}
               onChange={(e) => setContentTone(e.target.value as ContentTone)}
               aria-label="Select Content Tone"
             >
-              {TONE_OPTIONS.map(tone => (
-                <option key={tone} value={tone}>{tone}</option>
-              ))}
+              {TONE_OPTIONS.map(tone => <option key={tone} value={tone}>{tone}</option>)}
             </select>
           </div>
+
           <div>
             <label htmlFor="pov" className="block text-lg font-medium text-gray-200 mb-2">
               Point of View (POV):
             </label>
             <select
               id="pov"
-              className="w-full p-3 rounded-lg bg-gray-700 text-gray-50 border border-gray-600 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition duration-200 ease-in-out shadow-inner"
+              className="w-full p-3 rounded-lg bg-gray-700 text-gray-50 border border-gray-600 focus:ring-2 focus:ring-emerald-500 transition duration-200 ease-in-out shadow-inner"
               value={pov}
               onChange={(e) => setPov(e.target.value as PointOfView)}
               aria-label="Select Point of View"
             >
-              {POV_OPTIONS.map(option => (
-                <option key={option} value={option}>{option}</option>
-              ))}
+              {POV_OPTIONS.map(option => <option key={option} value={option}>{option}</option>)}
             </select>
           </div>
         </div>
@@ -141,30 +153,25 @@ const App = () => {
           </div>
         )}
 
-        {/* Enhanced prompt editor */}
+        {/* Generated / Editable Prompt */}
         {generatedPrompt && (
-          <div className="mt-10">
-            <h2 className="text-lg font-semibold text-gray-200 mb-2">
+          <div className="mt-8">
+            <label htmlFor="generatedPrompt" className="block text-lg font-medium text-gray-200 mb-2">
               Enhanced Video Prompt (8-sec optimized):
-            </h2>
-            <p className="text-sm text-gray-400 mb-4">
-              This is your AI-enhanced prompt. Feel free to <strong>add extra details</strong>, modify scenes, or customize anything before copying!
+            </label>
+            <p className="text-sm text-gray-400 mb-2">
+              You can edit or expand this prompt before copying. Add extra details, clarify concepts, or customize as you wish!
             </p>
             <textarea
               id="generatedPrompt"
-              className="w-full p-5 rounded-lg bg-gray-700 text-gray-50 border border-gray-600 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition duration-200 ease-in-out resize-y min-h-[250px] shadow-inner placeholder-gray-400"
+              className="w-full p-4 rounded-lg bg-gray-700 text-gray-50 border border-gray-600 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition duration-200 ease-in-out resize-y min-h-[200px] shadow-inner placeholder-gray-400"
+              rows={10}
               value={generatedPrompt}
               onChange={(e) => setGeneratedPrompt(e.target.value)}
-              placeholder="Add details like camera movement, lighting, mood, scene transitions, or dialogue..."
+              placeholder="Add or refine details here to make the video prompt even better..."
               aria-label="Enhanced Video Prompt"
             ></textarea>
-            <div className="flex justify-end mt-4 gap-2">
-              <button
-                onClick={handleClearPrompt}
-                className="px-4 py-2 rounded-full bg-gray-600 text-white text-sm font-medium shadow hover:bg-gray-500 transition duration-200 ease-in-out transform hover:scale-105 active:scale-95"
-              >
-                Clear
-              </button>
+            <div className="flex justify-end mt-4">
               <button
                 onClick={handleCopyToClipboard}
                 className="px-5 py-2 rounded-full bg-blue-600 text-white text-sm font-medium shadow-md hover:bg-blue-700 transition duration-200 ease-in-out transform hover:scale-105 active:scale-95"
@@ -176,14 +183,14 @@ const App = () => {
           </div>
         )}
 
-        {/* Prompt Tips */}
+        {/* Prompt tips */}
         <div className="mt-12 text-sm text-gray-400 border-t border-gray-700 pt-6">
           <h2 className="text-lg font-semibold text-gray-300 mb-2">Prompt Tips:</h2>
           <ul className="list-disc list-inside space-y-2">
             <li>Be specific about the subject and action.</li>
             <li>Include lighting, mood, and setting details.</li>
             <li>Use cinematic language for video dynamics.</li>
-            <li>Refine or expand your generated prompt in the editor before copying!</li>
+            <li>Refine your generated prompt in the editor before copying!</li>
           </ul>
         </div>
       </div>
