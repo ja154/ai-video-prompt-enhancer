@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { enhancePrompt } from './services/geminiService';
 import { TONE_OPTIONS, POV_OPTIONS, MODEL_OPTIONS } from './constants';
-import { ContentTone, PointOfView } from './types';
+import { ContentTone, PointOfView, ModelOption } from './types';
 
 const App = () => {
   const [userPrompt, setUserPrompt] = useState('');
@@ -10,7 +10,7 @@ const App = () => {
   const [error, setError] = useState('');
   const [contentTone, setContentTone] = useState<ContentTone>(ContentTone.Neutral);
   const [pov, setPov] = useState<PointOfView>(PointOfView.ThirdPerson);
-  const [selectedModel, setSelectedModel] = useState('gemini');
+  const [selectedModel, setSelectedModel] = useState<ModelOption>('gemini');
 
   const handleGenerateClick = useCallback(async () => {
     if (!userPrompt.trim()) return;
@@ -20,7 +20,12 @@ const App = () => {
     setIsLoading(true);
 
     try {
-      const result = await enhancePrompt({ userPrompt, contentTone, pov, selectedModel });
+      const result = await enhancePrompt({
+        userPrompt,
+        contentTone,
+        pov,
+        selectedModel
+      });
       setGeneratedPrompt(result);
     } catch (err) {
       console.error('Error generating prompt:', err);
@@ -35,7 +40,7 @@ const App = () => {
     if (!generatedPrompt) return;
     navigator.clipboard.writeText(generatedPrompt).catch(err => {
       console.error('Failed to copy text: ', err);
-      alert("Failed to copy text to clipboard.");
+      alert('Failed to copy text to clipboard.');
     });
   }, [generatedPrompt]);
 
@@ -46,10 +51,9 @@ const App = () => {
           AI Video Prompt Enhancer
         </h1>
         <p className="text-center text-gray-300 mb-8 max-w-2xl mx-auto">
-          Enter a simple prompt, select your desired tone, POV, and AI model. Our AI will expand it into a detailed, 8-second video prompt optimized for models like Veo.
+          Enter a simple prompt, choose your tone, POV, and AI model. We'll turn it into a detailed, 8-second video prompt!
         </p>
 
-        {/* User prompt input */}
         <div className="mb-6">
           <label htmlFor="userPrompt" className="block text-lg font-medium text-gray-200 mb-2">
             Your Initial Prompt:
@@ -65,35 +69,16 @@ const App = () => {
           ></textarea>
         </div>
 
-        {/* Model / Tone / POV Selectors */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-          <div>
-            <label htmlFor="model" className="block text-lg font-medium text-gray-200 mb-2">
-              Model Provider:
-            </label>
-            <select
-              id="model"
-              className="w-full p-3 rounded-lg bg-gray-700 text-gray-50 border border-gray-600 focus:ring-2 focus:ring-emerald-500 transition duration-200 ease-in-out shadow-inner"
-              value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value)}
-              aria-label="Select AI Model"
-            >
-              {MODEL_OPTIONS.map(model => (
-                <option key={model.id} value={model.id}>{model.name}</option>
-              ))}
-            </select>
-          </div>
-
           <div>
             <label htmlFor="contentTone" className="block text-lg font-medium text-gray-200 mb-2">
               Content Tone:
             </label>
             <select
               id="contentTone"
-              className="w-full p-3 rounded-lg bg-gray-700 text-gray-50 border border-gray-600 focus:ring-2 focus:ring-emerald-500 transition duration-200 ease-in-out shadow-inner"
+              className="w-full p-3 rounded-lg bg-gray-700 text-gray-50 border border-gray-600 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition duration-200 ease-in-out shadow-inner"
               value={contentTone}
               onChange={(e) => setContentTone(e.target.value as ContentTone)}
-              aria-label="Select Content Tone"
             >
               {TONE_OPTIONS.map(tone => <option key={tone} value={tone}>{tone}</option>)}
             </select>
@@ -105,17 +90,31 @@ const App = () => {
             </label>
             <select
               id="pov"
-              className="w-full p-3 rounded-lg bg-gray-700 text-gray-50 border border-gray-600 focus:ring-2 focus:ring-emerald-500 transition duration-200 ease-in-out shadow-inner"
+              className="w-full p-3 rounded-lg bg-gray-700 text-gray-50 border border-gray-600 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition duration-200 ease-in-out shadow-inner"
               value={pov}
               onChange={(e) => setPov(e.target.value as PointOfView)}
-              aria-label="Select Point of View"
             >
               {POV_OPTIONS.map(option => <option key={option} value={option}>{option}</option>)}
             </select>
           </div>
+
+          <div>
+            <label htmlFor="selectedModel" className="block text-lg font-medium text-gray-200 mb-2">
+              AI Model:
+            </label>
+            <select
+              id="selectedModel"
+              className="w-full p-3 rounded-lg bg-gray-700 text-gray-50 border border-gray-600 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition duration-200 ease-in-out shadow-inner"
+              value={selectedModel}
+              onChange={(e) => setSelectedModel(e.target.value as ModelOption)}
+            >
+              {MODEL_OPTIONS.map(model => (
+                <option key={model.value} value={model.value}>{model.label}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        {/* Generate button */}
         <div className="flex justify-center mb-8">
           <button
             onClick={handleGenerateClick}
@@ -145,7 +144,6 @@ const App = () => {
           </button>
         </div>
 
-        {/* Error message */}
         {error && (
           <div className="bg-red-800 p-4 rounded-lg text-red-100 mb-8 shadow-md" role="alert">
             <p className="font-semibold">An error occurred:</p>
@@ -153,7 +151,6 @@ const App = () => {
           </div>
         )}
 
-        {/* Generated / Editable Prompt */}
         {generatedPrompt && (
           <div className="mt-8">
             <label htmlFor="generatedPrompt" className="block text-lg font-medium text-gray-200 mb-2">
@@ -183,7 +180,6 @@ const App = () => {
           </div>
         )}
 
-        {/* Prompt tips */}
         <div className="mt-12 text-sm text-gray-400 border-t border-gray-700 pt-6">
           <h2 className="text-lg font-semibold text-gray-300 mb-2">Prompt Tips:</h2>
           <ul className="list-disc list-inside space-y-2">
@@ -191,6 +187,7 @@ const App = () => {
             <li>Include lighting, mood, and setting details.</li>
             <li>Use cinematic language for video dynamics.</li>
             <li>Refine your generated prompt in the editor before copying!</li>
+            <li>Pick the AI model best suited for your style.</li>
           </ul>
         </div>
       </div>
